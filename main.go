@@ -49,20 +49,40 @@ type BalancesAnswerModel struct {
 }
 
 func getBalancesHandler(c *gin.Context) {
-	var addresses []string
-	postData, err := c.GetRawData()
-	if err != nil {
-		c.AbortWithError(http.StatusBadRequest, err)
-		return
-	}
-	if addressesString := strings.Split(string(postData), "="); len(addressesString) == 2 {
-		addressesStringArr := strings.Split(addressesString[1], ",")
-		addresses = append(addresses, addressesStringArr...)
-	} else {
-		c.AbortWithError(http.StatusBadRequest, errors.New("wrong data"))
-		return
+	var (
+		addressesString string
+		addresses       []string
+	)
+
+	switch c.Request.Header.Get("Content-Type") {
+	case "application/json":
+		var addressesData = struct {
+			Addresses string `json:"addresses"`
+		}{}
+		if err := c.BindJSON(&addressesData); err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		addressesString = addressesData.Addresses
+	default:
+		postData, err := c.GetRawData()
+		if err != nil {
+			c.AbortWithError(http.StatusBadRequest, err)
+			return
+		}
+		if addressesStringArr := strings.Split(string(postData), "="); len(addressesStringArr) == 2 {
+			addressesString = addressesStringArr[1]
+		} else {
+			c.AbortWithError(http.StatusBadRequest, errors.New("wrong data"))
+			return
+		}
 	}
 
+	// Split addresses
+	addressesStringArr := strings.Split(addressesString, ",")
+	addresses = append(addresses, addressesStringArr...)
+
+	// Make answer
 	var (
 		answer = BalancesAnswerModel{
 			Data: make(map[string]int64),
@@ -80,7 +100,7 @@ func getBalancesHandler(c *gin.Context) {
 }
 
 func getBalance(hash string) int64 {
-	balance, err := BcApi.GetAddrBal(hash, nil)
+	balance, err := BcApi.GetAddrBal(strings.TrimSpace(hash), nil)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return 0
