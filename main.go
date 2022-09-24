@@ -51,6 +51,9 @@ func main() {
 	router.GET("/bcy-faucet", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "bcy-faucet.html", nil)
 	})
+	router.GET("/bcy-bank", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "bcy-bank.html", bcyBankWalletData())
+	})
 
 	// Serve http server
 	router.Run(HttpAddr)

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>BCY Bank</title>
+        <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+    </head>
+    <body>
+        <li><a href="/">Home</a></li>
+        <h3>BCY Bank</h3>
+        <div>
+            <h4>Address: {{ .wallet.address }}</h4>
+            <h4>Balance: {{ .wallet.balance }} ({{ .wallet.balanceSatoshis }})</h4>
+            <h4>Unconfirmed: {{ .wallet.unconfirmed }}</h4>
+            <h5>Public: {{ .wallet.public }}</h5>
+            <h5>Private: {{ .wallet.private }}</h5>
+        </div>
+        <div id="transactions">
+            <h4>Transactions</h4>
+            <table>
+                <tr>
+                  <th>Addresses</th>
+                  <th>Status</th>
+                </tr>
+                {{ range $tx := .transactions }}
+                <tr>
+                    <td>{{ $tx.Addresses }}</td>
+                    <td>{{ $tx.Status }}</td>
+                  </tr>
+                {{ end }}
+            </table>
+        </div>
+        <script>
+
+        </script>
+    </body>
+</html>

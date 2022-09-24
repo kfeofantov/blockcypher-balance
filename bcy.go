@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/big"
 	"net/http"
 
@@ -79,4 +80,49 @@ func bcyFaucetHandler(c *gin.Context) {
 		"to":     addr.Address,
 		"amount": model.Amount,
 	})
+}
+
+func bcyBankWalletData() gin.H {
+	const (
+		address    = "C16ZKtLMjo1e3KxxEaD6uewtdkYeojFQo1"
+		privateKey = "c617d15889ba6b350da66a7a371beec20a99460760382cb9a0ac382382e56fd8"
+		publicKey  = "02e07efec6e927ea007bd870969e93fef00c10780da5b6d75e2a0b9fbd2838736f"
+	)
+
+	addr, err := BcApi.GetAddr(address, nil)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return gin.H{}
+	}
+
+	type Transaction struct {
+		Addresses []string
+		Status    bool
+	}
+	var (
+		transactions = make([]Transaction, 0)
+	)
+	for _, txRef := range addr.TXRefs {
+		tx, err := BcApi.GetTX(txRef.TXHash, nil)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			return gin.H{}
+		}
+		transactions = append(transactions, Transaction{
+			Addresses: tx.Addresses,
+			Status:    tx.BlockHeight > 0,
+		})
+	}
+
+	return gin.H{
+		"wallet": map[string]interface{}{
+			"address":         address,
+			"private":         privateKey,
+			"public":          publicKey,
+			"unconfirmed":     float64(addr.UnconfirmedBalance.Int64()) / 100000000,
+			"balance":         float64(addr.Balance.Int64()) / 100000000,
+			"balanceSatoshis": addr.Balance.Int64(),
+		},
+		"transactions": transactions,
+	}
 }
