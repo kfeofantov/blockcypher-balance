@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>BCY Faucet</title>
+        <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+    </head>
+    <body>
+        <h3>BCY Faucet</h3>
+        <form id="bcy-faucet">
+            <label for="address">Address:</label><br>
+            <input type="text" id="address" name="address" value=""><br><br>
+            <label for="amount">Amount:</label><br>
+            <input type="number" id="amount" name="amount" value="0.001" step="0.001"><br><br>
+            <input type="submit" value="Send">
+        </form>
+        <div id="error-block">
+            <h4>Error:</h4>
+            <p id="error"></p>
+        </div>
+        <div id="transactions">
+            <h4>Transactions</h4>
+            <table>
+                <tr>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Amount</th>
+                </tr>
+            </table>
+        </div>
+        <script>
+            $("#error-block").hide();
+            $("#transactions").hide();
+
+            $("#bcy-faucet").submit(function( event ) {
+                event.preventDefault();
+                var $form = $(this);
+                $.post("/bcy-faucet", JSON.stringify({
+                    address: $form.find("input[name='address']").val(),
+                    amount: parseFloat($form.find("input[name='amount']").val())
+                }), null, "json")
+                .done(function(response){ 
+                    $('#transactions table').append($('<tr>')
+                        .append($('<td>').append(response['from']))
+                        .append($('<td>').append(response['to']))
+                        .append($('<td>').append(response['amount']))
+                    );
+                    $("#transactions").show();
+                })
+                .fail(function(response, status, error) {
+                    const answer = JSON.parse(response.responseText)
+                    $("#error-block p").text(answer['error']);
+                    $("#error-block").show();
+                });
+            })
+        </script>
+    </body>
+</html>

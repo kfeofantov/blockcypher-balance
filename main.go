@@ -39,7 +39,20 @@ func main() {
 	router.Use(cors.Default())
 
 	router.POST("/bitcoin/addresses/balances", getBalancesHandler)
+	router.POST("/bcy-faucet", bcyFaucetHandler)
 
+	// Load and render HTML pages
+	router.LoadHTMLGlob("templates/*.html")
+
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.html", nil)
+	})
+
+	router.GET("/bcy-faucet", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "bcy-faucet.html", nil)
+	})
+
+	// Serve http server
 	router.Run(HttpAddr)
 }
 
@@ -107,5 +120,3 @@ func getBalance(hash string) int64 {
 	}
 	return balance.FinalBalance.Int64()
 }
-
-// "C9LBdupQfLTtgsKDNRdeo6AroDMAeqoEqD"
