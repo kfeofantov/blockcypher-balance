@@ -126,3 +126,49 @@ func bcyBankWalletData() gin.H {
 		"transactions": transactions,
 	}
 }
+
+func bcyAccounts() gin.H {
+	var (
+		wallets = []struct {
+			Address         string
+			Private         string
+			Public          string
+			Unconfirmed     float64
+			Balance         float64
+			BalanceSatoshis int64
+			Transactions    string
+		}{
+			{
+				Address: "C8psDNmwR88b6fapZhHhjDiT16em9Wdqso",
+				Private: "8a0149f1662eeabc063f0f565b27ed15f11281c6bd07805f09ea328e01f95e6b",
+				Public:  "03a2590f54fb8e55cee0053d4c9f48efd6eb3cc6b6277901409e5cba809cade6ce",
+			},
+			{
+				Address: "C99p1B5FdAsZbjPcPfQ3vpdidUgJtPBjKy",
+				Private: "fb54ca81541111d62d59d9cb48b583da4fe92a939f8a9bf40cf3f64e6aecb25b",
+				Public:  "03a35c9f16e94b1efdd0f5eabd6610741c6688fc7b143586224c4a7b9625e2eaf0",
+			},
+			{
+				Address: "CBcZZYsVbo1APihkkW8NWVfAwW4gSRxGv7",
+				Private: "f61f4bbd3aa6028b83fbbe99b0d6651a82184880ae5d964878eca5ebff3609db",
+				Public:  "02475adc7c7170a5a145a7d16725007595e6221f2e126feeb7cde92dded9dff53a",
+			},
+		}
+	)
+
+	for _, wallet := range wallets {
+		wallet.Transactions = fmt.Sprintf("%s/%s/", "https://live.blockcypher.com/bcy/address", wallet.Address)
+		addr, err := BcApi.GetAddr(wallet.Address, nil)
+		if err != nil {
+			fmt.Printf("Error: %v\n", err)
+			return gin.H{}
+		}
+		wallet.Balance = float64(addr.Balance.Int64()) / 100000000
+		wallet.BalanceSatoshis = addr.Balance.Int64()
+		wallet.Unconfirmed = float64(addr.UnconfirmedBalance.Int64()) / 100000000
+	}
+
+	return gin.H{
+		"wallets": wallets,
+	}
+}

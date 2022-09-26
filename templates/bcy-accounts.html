@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>BCY Bank</title>
+        <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+        <style>
+            .address {
+                margin-top: 50px;
+            }
+        </style>
+    </head>
+    <body>
+        <li><a href="/">Home</a></li>
+        <h3>BCY Accounts</h3>
+        {{ range $wallet := .wallets }}
+        <div class="address">
+            <h4>Address: {{ $wallet.Address }}</h4>
+            <h4>Balance: {{ $wallet.Balance }} ({{ $wallet.BalanceSatoshis }})</h4>
+            <h4>Unconfirmed: {{ $wallet.Unconfirmed }}</h4>
+            <h5>Public: {{ $wallet.Public }}</h5>
+            <h5>Private: {{ $wallet.Private }}</h5>
+        </div>
+        {{ end }}
+    </body>
+</html>
