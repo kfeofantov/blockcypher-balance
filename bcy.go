@@ -156,7 +156,7 @@ func bcyAccounts() gin.H {
 		}
 	)
 
-	for _, wallet := range wallets {
+	for i, wallet := range wallets {
 		wallet.Transactions = fmt.Sprintf("%s/%s/", "https://live.blockcypher.com/bcy/address", wallet.Address)
 		addr, err := BcApi.GetAddr(wallet.Address, nil)
 		if err != nil {
@@ -166,6 +166,8 @@ func bcyAccounts() gin.H {
 		wallet.Balance = float64(addr.Balance.Int64()) / 100000000
 		wallet.BalanceSatoshis = addr.Balance.Int64()
 		wallet.Unconfirmed = float64(addr.UnconfirmedBalance.Int64()) / 100000000
+
+		wallets[i] = wallet
 	}
 
 	return gin.H{

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>ETH Random Wallet</title>
+        <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+        <style>
+            .address {
+                margin-top: 50px;
+            }
+            p {
+                font-size: 12px;
+            }
+        </style>
+    </head>
+    <body>
+        <li><a href="/">Home</a></li>
+        <h3>ETH Random Wallet</h3>
+        <div class="address">
+            <h4>Address: {{ .Address }}</h4>
+            <h5>Public: {{ .PublicS }}</h5>
+            <p> {{ .Public }}</p>
+            <h5>Private: {{ .PrivateS }}</h5>
+            <p>{{ .Private }}</p>
+        </div>
+    </body>
+</html>

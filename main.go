@@ -8,20 +8,27 @@ import (
 	"strings"
 
 	"github.com/blockcypher/gobcy/v2"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
 var (
-	BcToken  = "blockcypher-token"
-	HttpAddr = "localhost:9091"
+	BcToken     = "blockcypher-token"
+	AlchemyAddr = "https://eth-goerli.g.alchemy.com/v2"
+	AlchemyKey  = "alchemy-token"
+	HttpAddr    = "localhost:9091"
 
-	BcApi *gobcy.API
+	BcApi         *gobcy.API
+	AlchemyClient *ethclient.Client
 )
 
 func init() {
 	if bcToken := os.Getenv("BC_TOKEN"); bcToken != "" {
 		BcToken = bcToken
+	}
+	if alchemyKey := os.Getenv("ALCHEMY_TOKEN"); alchemyKey != "" {
+		AlchemyKey = alchemyKey
 	}
 	if httpAddr := os.Getenv("HTTP_ADDR"); httpAddr != "" {
 		HttpAddr = httpAddr
@@ -32,6 +39,12 @@ func init() {
 		Coin:  "bcy",
 		Chain: "test",
 	}
+
+	if client, err := ethclient.Dial(fmt.Sprintf("%s/%s", AlchemyAddr, AlchemyKey)); err != nil {
+		panic(err)
+	} else {
+		AlchemyClient = client
+	}
 }
 
 func main() {
@@ -40,6 +53,7 @@ func main() {
 
 	router.POST("/bitcoin/addresses/balances", getBalancesHandler)
 	router.POST("/bcy-faucet", bcyFaucetHandler)
+	router.POST("/eth-faucet", ethFaucetHandler)
 
 	// Load and render HTML pages
 	router.LoadHTMLGlob("templates/*.html")
@@ -56,6 +70,16 @@ func main() {
 	})
 	router.GET("/bcy-accounts", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "bcy-accounts.html", bcyAccounts())
+	})
+
+	router.GET("/eth-generate", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "eth-generate.html", generateEthWallet())
+	})
+	router.GET("/eth-bank", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "eth-bank.html", getEthBankAccount())
+	})
+	router.GET("/eth-faucet", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "eth-faucet.html", getEthFaucetAccount())
 	})
 
 	// Serve http server

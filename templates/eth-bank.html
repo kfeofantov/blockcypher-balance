@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>ETH Bank</title>
+        <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
+        <style>
+            td {
+                padding: 0 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <li><a href="/">Home</a></li>
+        <h3>ETH Bank</h3>
+        <div>
+            <h4>Address: <a target="_blank"  href="https://goerli.etherscan.io/address/{{ .wallet.Address }}">{{ .wallet.Address }}</a></h4>
+            <h4>Private: {{ .wallet.PrivateS }}</h4>
+            <h4>Private Bytes: {{ .wallet.Private }}</h4>
+            <h4>Public: {{ .wallet.PublicS }}</h4>
+            <h4>Balance: {{ .balance.BalanceEth }} ETH ({{ .balance.Balance }})</h4>
+            <h4>Pending: {{ .balance.Pending }}</h4>
+        </div>
+        <div id="transactions">
+            <h4>Income Transactions</h4>
+            <table>
+                <tr>
+                  <th>Block</th>
+                  <th>Hash</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Amount</th>
+                </tr>
+                {{ range $tx := .transactions }}
+                <tr>
+                    <td>{{ $tx.BlockNum }}</td>
+                    <td><a target="_blank"  href="https://goerli.etherscan.io/tx/{{ $tx.Hash }}">{{ $tx.Hash }}</a></td>
+                    <td><a target="_blank"  href="https://goerli.etherscan.io/address/{{ $tx.From }}">{{ $tx.From }}</a></td>
+                    <td>{{ $tx.To }}</td>
+                    <td>{{ $tx.Value }}</td>
+                </tr>
+                {{ end }}
+            </table>
+        </div>
+    </body>
+</html>

@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>BCY Bank</title>
+        <title>BCY Accounts</title>
         <script src="https://code.jquery.com/jquery-3.5.0.js"></script>
         <style>
             .address {
@@ -21,6 +21,7 @@
             <h4>Unconfirmed: {{ $wallet.Unconfirmed }}</h4>
             <h5>Public: {{ $wallet.Public }}</h5>
             <h5>Private: {{ $wallet.Private }}</h5>
+            <a target="_blank" href="{{ $wallet.Transactions }}">Discover</a>
         </div>
         {{ end }}
     </body>
