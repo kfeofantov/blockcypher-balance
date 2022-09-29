@@ -40,9 +40,8 @@ func bcyFaucetHandler(c *gin.Context) {
 		return
 	}
 
-	// Faucet
-	var btcAmount = int(model.Amount * 100000000)
-	_, err = BcApi.Faucet(genAddr, btcAmount+50000)
+	// Get Chain for transaction fees
+	chain, err := BcApi.GetChain()
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -50,8 +49,21 @@ func bcyFaucetHandler(c *gin.Context) {
 		return
 	}
 
+	// Faucet
+	var btcAmount = int(model.Amount * 100000000)
+	_, err = BcApi.Faucet(genAddr, btcAmount+chain.MediumFee)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	fmt.Printf("Address: %v Fee %v\n", chain.MediumFee, genAddr.Address)
+
 	// TX Sceleton
-	txSkeleton, err := BcApi.NewTX(gobcy.TempNewTX(genAddr.Address, addr.Address, *big.NewInt(int64(btcAmount))), false)
+	tx := gobcy.TempNewTX(genAddr.Address, addr.Address, *big.NewInt(int64(btcAmount)))
+	tx.Fees = *big.NewInt(int64(chain.MediumFee))
+	txSkeleton, err := BcApi.NewTX(tx, false)
 	if err != nil {
 		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

@@ -1,4 +1,4 @@
-FROM golang:alpine as builder
+FROM golang:1.19 as builder
 
 WORKDIR /app
 
@@ -8,7 +8,7 @@ RUN go mod download
 
 RUN go build -o /crypto-balance *.go
 
-FROM golang:alpine
+FROM golang:1.19
 
 WORKDIR /app
 
