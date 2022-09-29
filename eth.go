@@ -12,17 +12,24 @@ import (
 	"net/http"
 	"regexp"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/sha3"
+)
+
+const (
+	USDT_CONTRACT = "0x543e88Ab9073352d4562172f911a2281860910D2"
+	USDT_DECIMALS = 6
 )
 
 var (
 	// 0xa9c066859E4B1a227143DaA3dbdd3b3Ce0ae14b5
 	EthPrivateBank = []byte{206, 30, 216, 11, 94, 171, 92, 14, 93, 35, 32, 129, 153, 0, 138, 130, 51, 197, 138, 192, 53, 98, 169, 124, 121, 128, 153, 23, 129, 223, 18, 97}
-	// 0xE48a7F0d63D00b5c209CB663bac0ec3e1410f7b7s
+	// 0xE48a7F0d63D00b5c209CB663bac0ec3e1410f7b7
 	EthPrivateFaucet = []byte{98, 108, 5, 164, 87, 95, 210, 66, 49, 85, 57, 155, 193, 72, 84, 141, 143, 116, 113, 44, 10, 12, 17, 202, 125, 145, 171, 200, 3, 74, 210, 145}
 )
 
@@ -240,6 +247,111 @@ func ethFaucetHandler(c *gin.Context) {
 	// Make transaction
 	var data []byte
 	tx := types.NewTransaction(nonce, toAddress, value, gasLimit, gasPrice, data)
+
+	// Chain ID
+	chainID, err := AlchemyClient.NetworkID(context.Background())
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Sign
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// Send
+	if err := AlchemyClient.SendTransaction(context.Background(), signedTx); err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	c.Status(http.StatusOK)
+}
+
+func usdtFaucetHandler(c *gin.Context) {
+	var model EthFaucetRequestModel
+	if err := c.BindJSON(&model); err != nil {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+	if !re.MatchString(model.Addreess) {
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+			"error": "address not valid",
+		})
+		return
+	}
+
+	toAddress := common.HexToAddress(model.Addreess)
+	tokenAddress := common.HexToAddress(USDT_CONTRACT)
+
+	faucetWallet := getEthWallet(EthPrivateFaucet)
+
+	privateKey, err := crypto.ToECDSA(faucetWallet.Private)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	nonce, err := AlchemyClient.PendingNonceAt(context.Background(), common.HexToAddress(faucetWallet.Address))
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	value := big.NewInt(0)
+	gasPrice, err := AlchemyClient.SuggestGasPrice(context.Background())
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	mintFnSignature := []byte("mint(address,uint256)")
+	hash := sha3.NewLegacyKeccak256()
+	hash.Write(mintFnSignature)
+	methodID := hash.Sum(nil)[:4]
+
+	paddedAddress := common.LeftPadBytes(toAddress.Bytes(), 32)
+
+	amount := big.NewInt(int64(model.Amount * math.Pow10(USDT_DECIMALS)))
+	paddedAmount := common.LeftPadBytes(amount.Bytes(), 32)
+
+	var data []byte
+	data = append(data, methodID...)
+	data = append(data, paddedAddress...)
+	data = append(data, paddedAmount...)
+
+	gasLimit, err := AlchemyClient.EstimateGas(context.Background(), ethereum.CallMsg{
+		To:   &tokenAddress,
+		From: common.HexToAddress(faucetWallet.Address),
+		Data: data,
+	})
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	tx := types.NewTransaction(nonce, tokenAddress, value, gasLimit, gasPrice, data)
 
 	// Chain ID
 	chainID, err := AlchemyClient.NetworkID(context.Background())

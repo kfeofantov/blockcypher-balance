@@ -54,6 +54,7 @@ func main() {
 	router.POST("/bitcoin/addresses/balances", getBalancesHandler)
 	router.POST("/bcy-faucet", bcyFaucetHandler)
 	router.POST("/eth-faucet", ethFaucetHandler)
+	router.POST("/usdt-faucet", usdtFaucetHandler)
 
 	// Load and render HTML pages
 	router.LoadHTMLGlob("templates/*.html")
@@ -80,6 +81,12 @@ func main() {
 	})
 	router.GET("/eth-faucet", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "eth-faucet.html", getEthFaucetAccount())
+	})
+
+	router.GET("/usdt-faucet", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "usdt-faucet.html", gin.H{
+			"address": USDT_CONTRACT,
+		})
 	})
 
 	// Serve http server
